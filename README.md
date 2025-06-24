@@ -1,36 +1,43 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+📊 Sistema de Registro y Reporte de Alimentación de Lagos
 
-## Getting Started
+Este proyecto es un **sistema de inventario y registro de alimentación** para la gestión de insumos en lagos de cultivo. Permite registrar  sesiones de alimentación, visualizar el historial, monitorear el stock en tiempo real y generar reportes exportables en Excel filtrados por lago y rango de fechas.
 
-First, run the development server:
+🚀 Tecnologías Utilizadas
+- **Next.js 14** – Framework principal
+- **TypeScript** – Tipado estricto y seguro
+- **Supabase** – Base de datos y backend en tiempo real
+- **Tailwind CSS** – Estilos rápidos y responsivos
+- **shadcn/ui** – Componentes UI modernos y elegantes
+- **React Hot Toast** – Notificaciones amigables
+- **XLSX & FileSaver.js** – Exportación a Excel
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+📝 Características Principales
+- ✅ Registro de sesiones de alimentación por lago y tipo de alimento.
+- ✅ Validación de stock antes de registrar alimentación.
+- ✅ Actualización automática del inventario después de cada registro.
+- ✅ Visualización del historial de alimentación.
+- ✅ Dashboard con:
+  - Total de inventario disponible.
+  - Productos con bajo stock.
+  - Alimento más consumido.
+  - Cantidad de alimentaciones del día.
+- ✅ Reporte filtrable por lago y rango de fechas.
+- ✅ Exportación de reportes a Excel.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+📤 Exportación de Reportes
+Los reportes de consumo se pueden exportar en formato .xlsx con un clic desde la vista Reporte de Consumo. Los datos incluyen:
+- Fecha
+- Lago
+- Alimento suministrado
+- Cantidad total suministrada
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
 
-## Learn More
+👨‍💻 Autor
+Desarrollado con 💙 por Jeinnert Salazar
 
-To learn more about Next.js, take a look at the following resources:
+Si este proyecto te ayudó, ¡no dudes en darle una estrella ⭐ y compartirlo!
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+📬 Contacto
+- GitHub: @JeinnertSalazarM (https://github.com/JeinnertSalazarM)
+- Email: stevensalazsr@gmail.com
