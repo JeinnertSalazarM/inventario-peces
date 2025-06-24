@@ -1,71 +1,100 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import toast from "react-hot-toast";
-import { Trash } from "lucide-react";
+import { supabase } from "@/lib/supabase";
+
+interface InventoryItem {
+  id: string;
+  nombre: string;
+  cantidad: number;
+}
+
+interface FeedingLog {
+  id: string;
+  fecha: string;
+  lago: string;
+  alimento_id: string;
+  alimento_nombre: string;
+  cantidad: number;
+}
 
 export default function FeedingLogsPage() {
-  const [feedingLogs, setFeedingLogs] = useState([
-    { fecha: "2025-06-19", lago: "Lago 1", alimento: "Pellets Premium", cantidad: 12 },
-    { fecha: "2024-06-19", lago: "Lago 2", alimento: "Pellets Premium", cantidad: 25 },
-    { fecha: "2024-06-19", lago: "Lago 1", alimento: "Fórmula de Crecimiento", cantidad: 15 },
-    { fecha: "2024-06-18", lago: "Lago 2", alimento: "Realzador de Color", cantidad: 10 },
-    { fecha: "2024-06-18", lago: "Lago 3", alimento: "Alto en Proteína", cantidad: 30 },
-  ]);
+  const [inventory, setInventory] = useState<InventoryItem[]>([]);
+  const [feedingLogs, setFeedingLogs] = useState<FeedingLog[]>([]);
+  const [formData, setFormData] = useState({ lago: "", alimento_id: "", cantidad: "" });
 
-  const [formData, setFormData] = useState({
-    lago: "",
-    alimento: "",
-    cantidad: "",
-  });
-
-  const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
-
-  const alimentos = [
-    "Pellets Premium",
-    "Fórmula de Crecimiento",
-    "Realzador de Color",
-    "Alto en Proteína",
-  ];
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
-    });
+  // ✅ Cargar datos
+  const fetchInventory = async () => {
+    const { data } = await supabase.from("inventario").select("id, nombre, cantidad");
+    if (data) setInventory(data);
   };
 
-  const handleRegisterFeeding = () => {
-    if (!formData.lago || !formData.alimento || !formData.cantidad) {
+  const fetchFeedingLogs = async () => {
+    const { data, error } = await supabase
+      .from("alimentaciones")
+      .select("id, fecha, lago, cantidad, inventario:alimento_id (id, nombre)")
+      .order("fecha", { ascending: false });
+
+    if (error) console.error(error);
+
+    if (data) {
+      const formattedLogs = data.map((log: any) => ({
+        id: log.id,
+        fecha: log.fecha,
+        lago: log.lago,
+        alimento_id: log.inventario.id,
+        alimento_nombre: log.inventario.nombre,
+        cantidad: log.cantidad,
+      }));
+      setFeedingLogs(formattedLogs);
+    }
+  };
+
+  useEffect(() => {
+    fetchInventory();
+    fetchFeedingLogs();
+  }, []);
+
+  // ✅ Registrar alimentación
+  const handleRegisterFeeding = async () => {
+    if (!formData.lago || !formData.alimento_id || !formData.cantidad) {
       toast.error("Por favor, complete todos los campos.");
       return;
     }
 
-    const newLog = {
-      fecha: new Date().toISOString().split("T")[0],
-      lago: formData.lago,
-      alimento: formData.alimento,
-      cantidad: parseFloat(formData.cantidad),
-    };
+    const cantidad = parseFloat(formData.cantidad);
+    const selectedItem = inventory.find(item => item.id === formData.alimento_id);
 
-    setFeedingLogs([newLog, ...feedingLogs]);
-    setFormData({ lago: "", alimento: "", cantidad: "" });
-    toast.success("Alimentación registrada exitosamente.");
-  };
-
-  const handleConfirmDelete = () => {
-    if (deleteIndex !== null) {
-      const updatedLogs = [...feedingLogs];
-      updatedLogs.splice(deleteIndex, 1);
-      setFeedingLogs(updatedLogs);
-      setDeleteIndex(null);
-      toast.success("Registro eliminado.");
+    if (!selectedItem || selectedItem.cantidad < cantidad) {
+      toast.error("No hay suficiente cantidad disponible.");
+      return;
     }
+
+    // Insertar alimentación
+    const { error: insertError } = await supabase.from("alimentaciones").insert([
+      {
+        lago: formData.lago,
+        alimento_id: formData.alimento_id,
+        cantidad,
+      },
+    ]);
+
+    if (insertError) {
+      toast.error("Error al registrar la alimentación.");
+      return;
+    }
+
+    toast.success("Alimentación registrada exitosamente.");
+
+    // ✅ Resetear formulario y recargar datos
+    setFormData({ lago: "", alimento_id: "", cantidad: "" });
+    fetchInventory();
+    fetchFeedingLogs();
   };
 
   return (
@@ -77,9 +106,11 @@ export default function FeedingLogsPage() {
           <span className="text-sm text-muted-foreground">Registra una sesión de alimentación nueva.</span>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Select onValueChange={(value) => setFormData({ ...formData, lago: value })}>
+
+          {/* Select Lago controlado */}
+          <Select value={formData.lago} onValueChange={(value) => setFormData({ ...formData, lago: value })}>
             <SelectTrigger className="w-full">
-              <SelectValue  placeholder="Seleccione el lago" />
+              <SelectValue placeholder="Seleccione el lago" />
             </SelectTrigger>
             <SelectContent>
               {Array.from({ length: 24 }, (_, i) => (
@@ -88,13 +119,16 @@ export default function FeedingLogsPage() {
             </SelectContent>
           </Select>
 
-          <Select onValueChange={(value) => setFormData({ ...formData, alimento: value })}>
+          {/* Select Alimento controlado */}
+          <Select value={formData.alimento_id} onValueChange={(value) => setFormData({ ...formData, alimento_id: value })}>
             <SelectTrigger className="w-full">
               <SelectValue placeholder="Seleccione el alimento" />
             </SelectTrigger>
             <SelectContent>
-              {alimentos.map((alimento, index) => (
-                <SelectItem key={index} value={alimento}>{alimento}</SelectItem>
+              {inventory.map(item => (
+                <SelectItem key={item.id} value={item.id}>
+                  {item.nombre} ({item.cantidad} kg disponibles)
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -103,7 +137,7 @@ export default function FeedingLogsPage() {
             placeholder="Cantidad (kg)"
             name="cantidad"
             value={formData.cantidad}
-            onChange={handleInputChange}
+            onChange={(e) => setFormData({ ...formData, cantidad: e.target.value })}
           />
 
           <Button className="w-full" onClick={handleRegisterFeeding}>
@@ -126,7 +160,6 @@ export default function FeedingLogsPage() {
                 <th className="py-2 px-4">Lago</th>
                 <th className="py-2 px-4">Tipo de Alimento</th>
                 <th className="py-2 px-4">Cantidad (kg)</th>
-                <th className="py-2 px-4">Acciones</th>
               </tr>
             </thead>
             <tbody>
@@ -134,33 +167,14 @@ export default function FeedingLogsPage() {
                 <tr key={index} className="border-b">
                   <td className="py-2 px-4">{log.fecha}</td>
                   <td className="py-2 px-4">{log.lago}</td>
-                  <td className="py-2 px-4">{log.alimento}</td>
+                  <td className="py-2 px-4">{log.alimento_nombre}</td>
                   <td className="py-2 px-4 font-bold">{log.cantidad}</td>
-                  <td className="py-2 px-4">
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteIndex(index)}>
-                      <Trash className="w-4 h-4" />
-                    </Button>
-                  </td>
                 </tr>
               ))}
             </tbody>
           </table>
         </CardContent>
       </Card>
-
-      {/* Dialog de Confirmación */}
-      <Dialog open={deleteIndex !== null} onOpenChange={() => setDeleteIndex(null)}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>Confirmar Eliminación</DialogTitle>
-            <DialogDescription>¿Está seguro de eliminar este registro?</DialogDescription>
-          </DialogHeader>
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setDeleteIndex(null)}>Cancelar</Button>
-            <Button variant="destructive" onClick={handleConfirmDelete}>Eliminar</Button>
-          </div>
-        </DialogContent>
-      </Dialog>
     </div>
   );
 }
