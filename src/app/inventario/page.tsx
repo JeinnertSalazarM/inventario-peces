@@ -1,19 +1,30 @@
-// src/app/inventario/page.tsx
-
 "use client";
 
 import { useEffect, useState } from "react";
 import toast from "react-hot-toast";
 import { supabase } from "@/lib/supabase";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
+// ✅ CAMBIO 1: id como string (UUID)
 interface InventarioItem {
-  id: number;
+  id: string;
   nombre: string;
-  tamaño: number;
+  
   cantidad: number;
   marca: string;
   vencimiento: string;
@@ -23,9 +34,13 @@ interface InventarioItem {
 export default function InventoryPage() {
   const [inventory, setInventory] = useState<InventarioItem[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [isRestockDialogOpen, setIsRestockDialogOpen] = useState(false);
+  const [selectedProductId, setSelectedProductId] = useState<string>("");
+  const [restockAmount, setRestockAmount] = useState<string>("");
+
   const [formData, setFormData] = useState({
     nombre: "",
-    tamaño: "",
+    
     cantidad: "",
     marca: "",
     vencimiento: "",
@@ -35,9 +50,8 @@ export default function InventoryPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState("desc");
 
-  // 🔄 Cargar inventario
   const fetchInventory = async () => {
-    const { data, error } = await supabase.from('inventario').select('*');
+    const { data, error } = await supabase.from("inventario").select("*");
     if (error) {
       console.error("Error al cargar inventario", error);
       toast.error("Error al cargar inventario.");
@@ -50,22 +64,21 @@ export default function InventoryPage() {
     fetchInventory();
   }, []);
 
-  // 🎯 Insertar nuevo producto
   const handleAddItem = async () => {
-    if (!formData.nombre || !formData.tamaño || !formData.cantidad) {
+    if (!formData.nombre || !formData.cantidad) {
       toast.error("Por favor, complete todos los campos obligatorios.");
       return;
     }
 
-    const { error } = await supabase.from('inventario').insert([
+    const { error } = await supabase.from("inventario").insert([
       {
         nombre: formData.nombre,
-        tamaño: parseFloat(formData.tamaño),
+    
         cantidad: parseFloat(formData.cantidad),
         marca: formData.marca,
         vencimiento: formData.vencimiento,
         lote: formData.lote,
-      }
+      },
     ]);
 
     if (error) {
@@ -73,8 +86,55 @@ export default function InventoryPage() {
       toast.error("Error al agregar producto.");
     } else {
       toast.success("Producto agregado exitosamente.");
-      setFormData({ nombre: "", tamaño: "", cantidad: "", marca: "", vencimiento: "", lote: "" });
+      setFormData({
+        nombre: "",
+        
+        cantidad: "",
+        marca: "",
+        vencimiento: "",
+        lote: "",
+      });
       setIsDialogOpen(false);
+      fetchInventory();
+    }
+  };
+
+  const handleRestock = async () => {
+    console.log("🔁 Reabastecimiento iniciado");
+    console.log("👉 selectedProductId:", selectedProductId);
+    console.log("👉 restockAmount:", restockAmount);
+
+    const restockKg = parseFloat(restockAmount);
+
+    if (!selectedProductId || isNaN(restockKg) || restockKg <= 0) {
+      toast.error("Seleccione un producto y escriba una cantidad válida mayor a 0.");
+      return;
+    }
+
+    // ✅ CAMBIO 2: comparar UUID como string
+    const product = inventory.find((item) => item.id === selectedProductId);
+
+    if (!product) {
+      console.log("⛔ Producto no encontrado. IDs disponibles:", inventory.map(i => i.id));
+      toast.error("Producto no encontrado.");
+      return;
+    }
+
+    const nuevaCantidad = product.cantidad + restockKg;
+
+    const { error } = await supabase
+      .from("inventario")
+      .update({ cantidad: nuevaCantidad })
+      .eq("id", product.id);
+
+    if (error) {
+      console.error("Error al reabastecer producto", error);
+      toast.error("Error al reabastecer.");
+    } else {
+      toast.success("Producto reabastecido exitosamente.");
+      setIsRestockDialogOpen(false);
+      setSelectedProductId("");
+      setRestockAmount("");
       fetchInventory();
     }
   };
@@ -86,22 +146,24 @@ export default function InventoryPage() {
     });
   };
 
-  // 🔍 Filtrado y ordenamiento
   const filteredInventory = inventory
-    .filter((item) => item.nombre.toLowerCase().includes(searchQuery.toLowerCase()))
-    .sort((a, b) => sortOrder === "asc" ? a.cantidad - b.cantidad : b.cantidad - a.cantidad);
+    .filter((item) =>
+      item.nombre.toLowerCase().includes(searchQuery.toLowerCase())
+    )
+    .sort((a, b) =>
+      sortOrder === "asc" ? a.cantidad - b.cantidad : b.cantidad - a.cantidad
+    );
 
   return (
     <div className="space-y-6 w-full max-w-7xl min-h-full mx-auto">
-
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold">Gestión de Inventario</h1>
-        <Button variant="default" onClick={() => setIsDialogOpen(true)}>
-          + Agregar Producto
-        </Button>
+        <div className="flex gap-2">
+          <Button onClick={() => setIsDialogOpen(true)}>+ Agregar Producto</Button>
+          <Button variant="outline" onClick={() => setIsRestockDialogOpen(true)}>🔄 Reabastecer</Button>
+        </div>
       </div>
 
-      {/* Filtros */}
       <div className="flex gap-4 mb-4">
         <Input
           placeholder="Buscar por nombre"
@@ -122,11 +184,11 @@ export default function InventoryPage() {
       </div>
 
       <div className="bg-white rounded-lg p-4 shadow-md overflow-x-auto overflow-y-auto max-h-[500px]">
-        <table className="w-full text-left border-collapse ">
+        <table className="w-full text-left border-collapse">
           <thead className="bg-gray-100 sticky top-[-20px] z-10">
             <tr className="border-b">
               <th className="py-2 px-4">Tipo de Alimento</th>
-              <th className="py-2 px-4">Tamaño Pellet (mm)</th>
+              
               <th className="py-2 px-4">Cantidad (kg)</th>
               <th className="py-2 px-4">Marca</th>
               <th className="py-2 px-4">Fecha de Vencimiento</th>
@@ -137,7 +199,7 @@ export default function InventoryPage() {
             {filteredInventory.map((item) => (
               <tr key={item.id} className="border-b">
                 <td className="py-2 px-4">{item.nombre}</td>
-                <td className="py-2 px-4">{item.tamaño}</td>
+                
                 <td className="py-2 px-4 font-bold">{item.cantidad}</td>
                 <td className="py-2 px-4">{item.marca}</td>
                 <td className="py-2 px-4">{item.vencimiento}</td>
@@ -148,7 +210,7 @@ export default function InventoryPage() {
         </table>
       </div>
 
-      {/* Modal Agregar Producto */}
+      {/* Modal Agregar */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent>
           <DialogHeader>
@@ -157,13 +219,69 @@ export default function InventoryPage() {
           </DialogHeader>
 
           <div className="space-y-4">
-            <Input placeholder="Nombre" name="nombre" value={formData.nombre} onChange={handleInputChange} />
-            <Input placeholder="Tamaño Pellet (mm)" name="tamaño" value={formData.tamaño} onChange={handleInputChange} />
+            <Select value={formData.nombre} onValueChange={(value) => setFormData({ ...formData, nombre: value })}>
+  <SelectTrigger>
+    <SelectValue placeholder="Selecciona tipo de alimento" />
+  </SelectTrigger>
+  <SelectContent>
+    {[
+      "45% HARINA",
+      "45% INICIACION",
+      "38% 1.8 mm",
+      "34% 3 mm",
+      "32% 2.5 mm",
+      "32% 3.5 mm",
+      "32% 4.7 mm",
+      "28% 4.7 mm",
+    ].map((tipo) => (
+      <SelectItem key={tipo} value={tipo}>
+        {tipo}
+      </SelectItem>
+    ))}
+  </SelectContent>
+</Select>
+
             <Input placeholder="Cantidad (kg)" name="cantidad" value={formData.cantidad} onChange={handleInputChange} />
             <Input placeholder="Marca" name="marca" value={formData.marca} onChange={handleInputChange} />
             <Input placeholder="Fecha de Vencimiento" name="vencimiento" value={formData.vencimiento} onChange={handleInputChange} />
             <Input placeholder="Lote" name="lote" value={formData.lote} onChange={handleInputChange} />
             <Button className="w-full" onClick={handleAddItem}>Agregar</Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Modal Reabastecer */}
+      <Dialog open={isRestockDialogOpen} onOpenChange={setIsRestockDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Reabastecer Producto</DialogTitle>
+            <DialogDescription>Seleccione un producto y una cantidad en kilogramos.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4">
+            <Select value={selectedProductId} onValueChange={setSelectedProductId}>
+              <SelectTrigger>
+                <SelectValue placeholder="Seleccionar producto" />
+              </SelectTrigger>
+              <SelectContent>
+                {inventory.map((item) => (
+                  <SelectItem key={item.id} value={item.id}>
+                    {item.nombre} — {item.cantidad}kg
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+
+            <Input
+              type="number"
+              placeholder="Cantidad a añadir (kg)"
+              value={restockAmount}
+              onChange={(e) => setRestockAmount(e.target.value)}
+            />
+
+            <Button className="w-full" onClick={handleRestock}>
+              Confirmar Reabastecimiento
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
