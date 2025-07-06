@@ -255,7 +255,7 @@ export default function InventoryPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reabastecer Producto</DialogTitle>
-            <DialogDescription>Seleccione un producto y una cantidad en bultos.</DialogDescription>
+            <DialogDescription>Seleccione un producto y una cantidad en bultos para reabastecer.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
