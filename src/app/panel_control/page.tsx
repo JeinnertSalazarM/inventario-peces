@@ -101,7 +101,7 @@ export default function Dashboard() {
             <CardTitle>Total Inventario</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="text-4xl font-bold">{totalWeight} Bultos</div>
+            <div className="text-4xl font-bold">{totalWeight} Kg</div>
             <div className="text-muted-foreground">Cantidad total disponible</div>
           </CardContent>
         </Card>
@@ -122,7 +122,7 @@ export default function Dashboard() {
           </CardHeader>
           <CardContent>
             <div className="text-green-600 font-bold">{mostUsedFood}</div>
-            <div className="text-muted-foreground">{mostUsedFoodAmount} Bultos consumidos</div>
+            <div className="text-muted-foreground">{mostUsedFoodAmount} Kg consumidos</div>
           </CardContent>
         </Card>
 
@@ -149,7 +149,7 @@ export default function Dashboard() {
             <tr className="border-b">
               <th className="py-2">Nombre</th>
               <th className="py-2">Tamaño de pellet (mm)</th>
-              <th className="py-2">Cantidad (Bultos)</th>
+              <th className="py-2">Cantidad (Kg)</th>
               <th className="py-2">Estado</th>
             </tr>
           </thead>

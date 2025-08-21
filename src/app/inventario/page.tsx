@@ -189,7 +189,7 @@ export default function InventoryPage() {
             <tr className="border-b">
               <th className="py-2 px-4">Tipo de Alimento</th>
               
-              <th className="py-2 px-4">Cantidad (Bultos)</th>
+              <th className="py-2 px-4">Cantidad (kg)</th>
               <th className="py-2 px-4">Marca</th>
               <th className="py-2 px-4">Fecha de Vencimiento</th>
               <th className="py-2 px-4">Lote</th>
@@ -241,7 +241,7 @@ export default function InventoryPage() {
   </SelectContent>
 </Select>
 
-            <Input placeholder="Cantidad (Bultos)" name="cantidad" value={formData.cantidad} onChange={handleInputChange} />
+            <Input placeholder="Cantidad (kg)" name="cantidad" value={formData.cantidad} onChange={handleInputChange} />
             <Input placeholder="Marca" name="marca" value={formData.marca} onChange={handleInputChange} />
             <Input placeholder="Fecha de Vencimiento" name="vencimiento" value={formData.vencimiento} onChange={handleInputChange} />
             <Input placeholder="Lote" name="lote" value={formData.lote} onChange={handleInputChange} />
@@ -255,7 +255,7 @@ export default function InventoryPage() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Reabastecer Producto</DialogTitle>
-            <DialogDescription>Seleccione un producto y una cantidad en bultos para reabastecer.</DialogDescription>
+            <DialogDescription>Seleccione un producto y una cantidad en kg para reabastecer.</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
@@ -274,7 +274,7 @@ export default function InventoryPage() {
 
             <Input
               type="number"
-              placeholder="Cantidad a añadir (Bultos)"
+              placeholder="Cantidad a añadir (Kg)"
               value={restockAmount}
               onChange={(e) => setRestockAmount(e.target.value)}
             />

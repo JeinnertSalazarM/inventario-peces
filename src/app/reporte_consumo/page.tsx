@@ -95,7 +95,7 @@ export default function ConsumptionReportPage() {
     const exportData = aggregatedData.map((log) => ({
       Lago: log.lago,
       Alimento: log.alimento,
-      'Total Consumido (Bultos)': log.total,
+      'Total Consumido (Kg)': log.total,
       Sesiones: log.sesiones,
     }));
 
@@ -164,7 +164,7 @@ export default function ConsumptionReportPage() {
               <tr className="border-b">
                 <th className="py-2 px-4">Lago</th>
                 <th className="py-2 px-4">Alimento</th>
-                <th className="py-2 px-4">Total Consumido (Bultos)</th>
+                <th className="py-2 px-4">Total Consumido (Kg)</th>
                 <th className="py-2 px-4">Sesiones</th>
               </tr>
             </thead>

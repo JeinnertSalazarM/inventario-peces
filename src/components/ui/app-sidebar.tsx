@@ -53,7 +53,7 @@ export function AppSidebar() {
               <div className="bg-blue-100 text-blue-600 p-2 rounded-full">
                 <Fish className="size-6" />
               </div>
-              <span className="text-xl font-bold tracking-wide text-gray-700">AquaFondo</span>
+              <span className="text-xl font-bold tracking-wide text-gray-700">Fondo Ganadero </span>
             </div>
 
           </SidebarGroupLabel>
